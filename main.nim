@@ -1,20 +1,6 @@
 import strformat
-import sequtils
-import posix
+import lib/bwrap
 import os
-
-type BwrapCall = object
-  args: seq[string]
-
-proc addArg(call: var BwrapCall, args: varargs[string]) =
-  for arg in args:
-    call.args.add(arg)
-
-proc addMount(call: var BwrapCall, mType: string, path: string) =
-  addArg(call, mType, path, path)
-
-proc exec(call: var BwrapCall) =
-  discard execv("/usr/bin/bwrap", allocCStringArray(@["bwrap"].concat(call.args)))
 
 proc homePath(p: string): string =
   joinPath(getHomeDir(), p)
@@ -41,30 +27,31 @@ let sandboxInfo = joinPath(sandboxPath, "info")
 
 createDir(sandboxFiles)
 
-var bwrap = BwrapCall()
+var call = BwrapCall()
 
-for bMount in ["/sys"]:
-  bwrap.addMount("--bind", bmount)
+call.addArg("--bind", sandboxFiles, getHomeDir())
 
-for roMount in ["/etc", "/var", "/usr", "/opt"]:
-  bwrap.addMount("--ro-bind", roMount)
+for mount in ["/sys"]:
+  call.addMount("--bind", mount)
 
-bwrap.addMount("--dev-bind", "/dev")
-bwrap.addArg("--bind", sandboxFiles, getHomeDir())
-bwrap.addArg("--dir", "/tmp")
-bwrap.addArg("--symlink", "usr/lib", "/lib")
-bwrap.addArg("--symlink", "usr/lib64", "/lib64")
-bwrap.addArg("--symlink", "usr/bin", "/bin")
-bwrap.addArg("--symlink", "usr/sbin", "/sbin")
-bwrap.addArg("--proc", "/proc")
-bwrap.addArg("--unshare-all")
-bwrap.addArg("--share-net")
-bwrap.addArg("--die-with-parent")
-bwrap.addArg("--hostname", name)
-bwrap.addArg("--chdir", getHomeDir())
-bwrap.addArg(command)
+for mount in ["/etc", "/var", "/usr", "/opt", homePath(".oh-my-zsh"), homePath(".zsh"), homePath(".zshrc")]:
+  call.addMount("--ro-bind", mount)
 
-bwrap.exec()
+call
+  .addMount("--dev-bind", "/dev")
+  .addArg("--dir", "/tmp")
+  .addArg("--symlink", "usr/lib", "/lib")
+  .addArg("--symlink", "usr/lib64", "/lib64")
+  .addArg("--symlink", "usr/bin", "/bin")
+  .addArg("--symlink", "usr/sbin", "/sbin")
+  .addArg("--proc", "/proc")
+  .addArg("--unshare-all")
+  .addArg("--share-net")
+  .addArg("--die-with-parent")
+  .addArg("--hostname", name)
+  .addArg("--chdir", getHomeDir())
+  .addArg(command)
+  .exec()
 
 #[
 (exec bwrap --bind $sandbox_files $HOME \
