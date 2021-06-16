@@ -1,13 +1,14 @@
 import os
 import json
+import modes
 import bwrap
 import config
 import options
 
-const CONFIG_LOCATION = "config.json"
-
 proc homePath(p: string): string =
   joinPath(getHomeDir(), p)
+
+const CONFIG_LOCATION = homePath(joinPath(".sandboxes", "config.json"))
 
 proc checkRelativePath(p: string): string =
   if p[0] == '/':
@@ -27,7 +28,7 @@ proc applyConfig(call: var BwrapCall, config: Config) =
 proc loadConfig(path: string): Config =
   return readFile(path).parseJson().to(Config)
 
-proc sandboxExec*(name: string, command: string) =
+proc sandboxExec*(name: string, command: string, mode: Modes) =
   let sandboxPath = homePath(joinPath(".sandboxes", name))
   let sandboxFiles = joinPath(sandboxPath, "files")
   let sandboxInfo = joinPath(sandboxPath, "info")
@@ -38,17 +39,20 @@ proc sandboxExec*(name: string, command: string) =
   call
     .addArg("--bind", sandboxFiles, getHomeDir())
     .addMount("--dev-bind", "/dev")
-    .addArg("--dir", "/tmp")
+    .addArg("--tmpfs", "/tmp")
     .addArg("--proc", "/proc")
     .addArg("--unshare-all")
     .addArg("--share-net")
     .addArg("--die-with-parent")
     .addArg("--hostname", name)
-    .addArg("--chdir", getHomeDir())
     .applyConfig(loadConfig(CONFIG_LOCATION))
 
+  if mode == Modes.Shell:
+    call
+      .addMount("--bind", getCurrentDir())
+      .addArg("--chdir", getCurrentDir())
+
   let configPath = sandboxPath.joinPath("config.json")
-  echo configPath
   if fileExists(configPath):
     call.applyConfig(loadConfig(configPath))
 

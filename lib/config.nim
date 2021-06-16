@@ -5,6 +5,7 @@ type Link* = object
   dst*: string
 
 type Config* = object
-    mount*: Option[seq[string]]
-    romount*: Option[seq[string]]
-    symlinks*: Option[seq[Link]]
+  extends*: Option[seq[string]]
+  mount*: Option[seq[string]]
+  romount*: Option[seq[string]]
+  symlinks*: Option[seq[Link]]

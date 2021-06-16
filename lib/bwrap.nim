@@ -14,5 +14,4 @@ proc addMount*(call: var BwrapCall, mType: string, path: string): var BwrapCall 
   call
 
 proc exec*(call: var BwrapCall) =
-  echo call.args
   discard execv("/usr/bin/bwrap", allocCStringArray(@["bwrap"].concat(call.args)))
