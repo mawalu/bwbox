@@ -1,59 +1,49 @@
 import os
-import json
+import args
+import utils
 import modes
 import bwrap
 import config
 import options
 
-proc homePath(p: string): string =
-  joinPath(getHomeDir(), p)
-
-const CONFIG_LOCATION = homePath(joinPath(".sandboxes", "config.json"))
-
-proc checkRelativePath(p: string): string =
-  if p[0] == '/':
-    return p
-  homePath(p)
-
-proc applyConfig(call: var BwrapCall, config: Config) =
-  for mount in config.mount.get(@[]):
-     call.addMount("--bind", checkRelativePath(mount))
-
-  for mount in config.romount.get(@[]):
-     call.addMount("--ro-bind", checkRelativePath(mount))
-
-  for symlink in config.symlinks.get(@[]):
-     call.addArg("--symlink", symlink.src, symlink.dst)
-
-proc loadConfig(path: string): Config =
-  return readFile(path).parseJson().to(Config)
-
-proc sandboxExec*(name: string, command: string, mode: Modes) =
-  let sandboxPath = homePath(joinPath(".sandboxes", name))
-  let sandboxFiles = joinPath(sandboxPath, "files")
-  let sandboxInfo = joinPath(sandboxPath, "info")
-
-  createDir(sandboxFiles)
+proc sandboxExec*(mode: Modes, args: Args) =
   var call = BwrapCall()
+  var userConfig = none(Config)
+
+  let hostname = args.name.get("sandbox")
+  let profilePath = getProfilePath(args, mode)
+
+  if args.name.isSome:
+    let name = args.name.unsafeGet
+    let sandboxPath = getSandboxPath(name)
+    let sandboxFiles = sandboxPath.joinPath("files")
+    let configPath = sandboxPath.joinPath("config.json")
+
+    if fileExists(configPath):
+        userConfig = some(loadConfig(configPath))
+
+    createDir(sandboxFiles)
+    call.addArg("--bind", sandboxFiles, getHomeDir())
+
+  var profile = loadConfig(profilePath)
+  profile.extendConfig()
 
   call
-    .addArg("--bind", sandboxFiles, getHomeDir())
-    .addMount("--dev-bind", "/dev")
+    .addMount("--dev-bind", "/dev/null")
     .addArg("--tmpfs", "/tmp")
     .addArg("--proc", "/proc")
     .addArg("--unshare-all")
     .addArg("--share-net")
     .addArg("--die-with-parent")
-    .addArg("--hostname", name)
-    .applyConfig(loadConfig(CONFIG_LOCATION))
+    .applyConfig(profile)
 
   if mode == Modes.Shell:
     call
       .addMount("--bind", getCurrentDir())
       .addArg("--chdir", getCurrentDir())
+      .addArg("--hostname", hostname)
 
-  let configPath = sandboxPath.joinPath("config.json")
-  if fileExists(configPath):
-    call.applyConfig(loadConfig(configPath))
+  if userConfig.isSome:
+    call.applyConfig(userConfig.unsafeGet)
 
-  call.addArg(command).exec()
+  call.addArg(args.getCmd).exec()
