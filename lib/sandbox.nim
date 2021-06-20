@@ -1,49 +1,58 @@
 import os
 import args
+import json
 import utils
-import modes
 import bwrap
 import config
 import options
 
-proc sandboxExec*(mode: Modes, args: Args) =
+proc sandboxExec*(args: Args) =
   var call = BwrapCall()
-  var userConfig = none(Config)
+  var configPath = none(string)
 
-  let hostname = args.name.get("sandbox")
-  let profilePath = getProfilePath(args, mode)
+  let hostname = args.name.get(getProfile(argst ))
 
   if args.name.isSome:
     let name = args.name.unsafeGet
     let sandboxPath = getSandboxPath(name)
     let sandboxFiles = sandboxPath.joinPath("files")
-    let configPath = sandboxPath.joinPath("config.json")
+    let userConfig = sandboxPath.joinPath("config.json")
 
-    if fileExists(configPath):
-        userConfig = some(loadConfig(configPath))
 
     createDir(sandboxFiles)
     call.addArg("--bind", sandboxFiles, getHomeDir())
 
-  var profile = loadConfig(profilePath)
-  profile.extendConfig()
+    if not fileExists(userConfig):
+      let newConfig = %* {"extends": getProfile(args)}
+      writeFile(userConfig, $newConfig)
+
+    configPath = some(userConfig)
+
+  if configPath.isNone or not fileExists(configPath.unsafeGet):
+    configPath = some(getProfilePath(args))
+
+  var config = loadConfig(configPath.unsafeGet)
+  config.extendConfig()
 
   call
     .addMount("--dev-bind", "/dev/null")
+    .addMount("--dev-bind", "/dev/random")
+    .addMount("--dev-bind", "/dev/urandom")
     .addArg("--tmpfs", "/tmp")
     .addArg("--proc", "/proc")
     .addArg("--unshare-all")
     .addArg("--share-net")
     .addArg("--die-with-parent")
-    .applyConfig(profile)
+    .addArg("--setenv", "BWSANDBOX", "1")
+    .applyConfig(config)
 
-  if mode == Modes.Shell:
+  if config.mountcwd.get(false):
     call
       .addMount("--bind", getCurrentDir())
       .addArg("--chdir", getCurrentDir())
-      .addArg("--hostname", hostname)
 
-  if userConfig.isSome:
-    call.applyConfig(userConfig.unsafeGet)
+  if config.sethostname.get(false):
+    call
+      .addArg("--hostname", hostname)
 
   call.addArg(args.getCmd).exec()

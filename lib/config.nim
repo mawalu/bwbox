@@ -13,6 +13,9 @@ type Config* = object
   mount*: Option[seq[string]]
   romount*: Option[seq[string]]
   symlinks*: Option[seq[Link]]
+  mountcwd*: Option[bool]
+  privileged*: Option[bool]
+  sethostname*: Option[bool]
 
 proc applyConfig*(call: var BwrapCall, config: Config) =
   for mount in config.mount.get(@[]):
@@ -39,5 +42,7 @@ proc extendConfig*(config: var Config): Config {.discardable.} =
   config.mount = some(config.mount.get(@[]).concat(eConf.mount.get(@[])))
   config.romount = some(config.romount.get(@[]).concat(eConf.romount.get(@[])))
   config.symlinks = some(config.symlinks.get(@[]).concat(eConf.symlinks.get(@[])))
+  config.mountcwd = some(config.mountcwd.get(eConf.mountcwd.get(false)))
+  config.sethostname = some(config.sethostname.get(eConf.sethostname.get(false)))
 
   return config

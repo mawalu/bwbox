@@ -1,6 +1,5 @@
 import parseopt
 import options
-import modes
 import os
 
 type Args* = object
@@ -11,13 +10,11 @@ type Args* = object
 proc getCmd*(args: Args): string =
   return args.cmd.get(getEnv("SHELL", "/bin/bash"))
 
-proc getProfile*(args: Args, mode: Modes): string =
+proc getProfile*(args: Args): string =
   if args.profile.isSome:
     return args.profile.unsafeGet
 
-  return case mode
-  of Modes.Shell: "shell"
-  of Modes.Box: "gui"
+  return "default"
 
 proc parseOpt(args: var Args, key: string, value: string): bool =
   case key
