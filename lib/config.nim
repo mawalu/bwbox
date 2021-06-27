@@ -16,6 +16,13 @@ type Config* = object
   mountcwd*: Option[bool]
   privileged*: Option[bool]
   sethostname*: Option[bool]
+  allowdri*: Option[bool]
+  dbus*: Option[bool]
+  dbussee*: Option[seq[string]]
+  dbustalk*: Option[seq[string]]
+  dbusown*: Option[seq[string]]
+  dbuscall*: Option[seq[string]]
+  dbusbroadcast*: Option[seq[string]]
 
 proc applyConfig*(call: var BwrapCall, config: Config) =
   for mount in config.mount.get(@[]):
@@ -39,10 +46,19 @@ proc extendConfig*(config: var Config): Config {.discardable.} =
   var eConf = loadConfig(getProfilePath(config.extends.unsafeGet))
   eConf.extendConfig()
 
+  # todo: replace using macro / templates
   config.mount = some(config.mount.get(@[]).concat(eConf.mount.get(@[])))
   config.romount = some(config.romount.get(@[]).concat(eConf.romount.get(@[])))
   config.symlinks = some(config.symlinks.get(@[]).concat(eConf.symlinks.get(@[])))
   config.mountcwd = some(config.mountcwd.get(eConf.mountcwd.get(false)))
   config.sethostname = some(config.sethostname.get(eConf.sethostname.get(false)))
+  config.allowdri = some(config.allowdri.get(eConf.allowdri.get(false)))
+
+  config.dbus = some(config.dbus.get(eConf.dbus.get(false)))
+  config.dbussee = some(config.dbussee.get(@[]).concat(eConf.dbussee.get(@[])))
+  config.dbustalk = some(config.dbustalk.get(@[]).concat(eConf.dbustalk.get(@[])))
+  config.dbusown = some(config.dbusown.get(@[]).concat(eConf.dbusown.get(@[])))
+  config.dbuscall = some(config.dbuscall.get(@[]).concat(eConf.dbuscall.get(@[])))
+  config.dbusbroadcast = some(config.dbusbroadcast.get(@[]).concat(eConf.dbusbroadcast.get(@[])))
 
   return config
