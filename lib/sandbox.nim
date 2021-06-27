@@ -1,23 +1,24 @@
-import os
-import args
-import json
+import strutils
+import options
+import config
 import utils
 import bwrap
-import config
-import options
+import args
+import json
+import dbus
+import os
 
 proc sandboxExec*(args: Args) =
   var call = BwrapCall()
   var configPath = none(string)
 
-  let hostname = args.name.get(getProfile(argst ))
+  let hostname = args.name.get(getProfile(args))
 
   if args.name.isSome:
     let name = args.name.unsafeGet
     let sandboxPath = getSandboxPath(name)
     let sandboxFiles = sandboxPath.joinPath("files")
     let userConfig = sandboxPath.joinPath("config.json")
-
 
     createDir(sandboxFiles)
     call.addArg("--bind", sandboxFiles, getHomeDir())
@@ -35,16 +36,29 @@ proc sandboxExec*(args: Args) =
   config.extendConfig()
 
   call
-    .addMount("--dev-bind", "/dev/null")
+    .addArg("--dev", "/dev")
     .addMount("--dev-bind", "/dev/random")
     .addMount("--dev-bind", "/dev/urandom")
     .addArg("--tmpfs", "/tmp")
+    .addArg("--tmpfs", "/dev/shm")
     .addArg("--proc", "/proc")
     .addArg("--unshare-all")
     .addArg("--share-net")
     .addArg("--die-with-parent")
     .addArg("--setenv", "BWSANDBOX", "1")
     .applyConfig(config)
+
+  if config.dbus.get(false):
+    # todo: handle process and cleanup later
+    let proxy = startDBusProxy(config, hostname)
+    call.addArg("--ro-bind", proxy.socket,
+      getEnv("DBUS_SESSION_BUS_ADDRESS").split('=')[1])
+
+    # todo: use fd signaling instead of this
+    sleep(100)
+
+  if config.allowdri.get(false):
+    enableDri(call)
 
   if config.mountcwd.get(false):
     call
