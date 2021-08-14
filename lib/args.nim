@@ -4,11 +4,11 @@ import os
 
 type Args* = object
   name*: Option[string]
-  cmd*: Option[string]
+  cmd*: Option[seq[string]]
   profile*: Option[string]
 
-proc getCmd*(args: Args): string =
-  return args.cmd.get(getEnv("SHELL", "/bin/bash"))
+proc getCmd*(args: Args): seq[string] =
+  return args.cmd.get(@[getEnv("SHELL", "/bin/bash")])
 
 proc getProfile*(args: Args): string =
   if args.profile.isSome:
@@ -18,8 +18,8 @@ proc getProfile*(args: Args): string =
 
 proc parseOpt(args: var Args, key: string, value: string): bool =
   case key
-  of "command", "c":
-    args.cmd = some(value)
+  of "name", "n":
+    args.name = some(value)
   of "profile", "p":
     args.profile = some(value)
   else:
@@ -30,6 +30,7 @@ proc parseOpt(args: var Args, key: string, value: string): bool =
 proc parseArgs*(): Option[Args] =
   var p = initOptParser()
   var args = Args()
+  var command = newSeq[string]()
 
   while true:
     p.next()
@@ -40,6 +41,9 @@ proc parseArgs*(): Option[Args] =
         echo "Invalid argument ", p.val
         return
     of cmdArgument:
-      args.name = some(p.key.string)
+      command.add(p.key.string)
+
+  if command.len > 0:
+    args.cmd = some(command)
 
   return some(args)
