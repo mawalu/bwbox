@@ -12,12 +12,14 @@ check_dir() {
   for application in "$dir/"*; do
     file="$(basename "$application")"
 
-    sed "s/Exec=/Exec=bwrap --name='$file' --profile=gui /gi" "$application" > "$target/$file"
+    sed "s/Exec=/Exec=bwshell --name '$file' --profile gui /gi" "$application" > "$target/$file"
   done
 }
 
 dirs=("/usr/share/applications" "$HOME/.local/share/applications")
 target="$1"
+
+mkdir -p "$target"
 
 for dir in "${dirs[@]}"; do
   check_dir "$dir"

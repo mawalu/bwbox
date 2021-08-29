@@ -1,4 +1,3 @@
-import parseopt
 import options
 import os
 
@@ -16,32 +15,25 @@ proc getProfile*(args: Args): string =
 
   return "default"
 
-proc parseOpt(args: var Args, key: string, value: string): bool =
-  case key
-  of "name", "n":
-    args.name = some(value)
-  of "profile", "p":
-    args.profile = some(value)
-  else:
-    return false
-
-  return true
-
 proc parseArgs*(): Option[Args] =
-  var p = initOptParser()
   var args = Args()
-  var command = newSeq[string]()
 
-  while true:
-    p.next()
-    case p.kind
-    of cmdEnd: break
-    of cmdShortOption, cmdLongOption:
-      if p.val == "" or args.parseOpt(p.key, p.val) == false:
-        echo "Invalid argument ", p.val
-        return
-    of cmdArgument:
-      command.add(p.key.string)
+  var command = newSeq[string]()
+  var i = 1
+
+  while i <= paramCount():
+    var arg = paramStr(i)
+
+    if arg == "--name":
+      args.name = some(paramStr(i + 1))
+      i += 2
+    elif arg == "--profile":
+      args.profile = some(paramStr(i + 1))
+      i += 2
+    else:
+      echo arg
+      command.add(arg)
+      i += 1
 
   if command.len > 0:
     args.cmd = some(command)
