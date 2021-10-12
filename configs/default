@@ -1,0 +1,10 @@
+{
+  "mount": [],
+  "romount": ["/etc", "/var", "/usr", "/opt"],
+  "symlinks": [
+    {"src": "usr/lib", "dst": "/lib"},
+    {"src": "usr/lib64", "dst": "/lib64"},
+    {"src": "usr/bin", "dst": "/bin"},
+    {"src": "usr/sbin", "dst": "/sbin"}
+  ]
+}

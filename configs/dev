@@ -1,0 +1,1 @@
+{"extends": "shell", "romount": [".gitconfig", ".gnupg", "/run/user/1000/gnupg", ".ssh/config"], "mountcwd": true, "mount": [".ssh/known_hosts"]}

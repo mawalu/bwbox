@@ -1,0 +1,1 @@
+{"extends": "default", "romount": [".Xauthority", "/tmp/.X11-unix", "/run/user/1000/pulse/native"], "dbus": true, "dbuscall": ["org.freedesktop.Notifications.*=@/org/freedesktop/Notifications", "org.freedesktop.portal.*=*"], "dbusbroadcast": ["org.freedesktop.portal.*=@/org/freedesktop/portal/*"]}

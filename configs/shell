@@ -1,0 +1,1 @@
+{"extends": "default", "romount": [".oh-my-zsh", ".zsh", ".zshrc", ".zshrc-local"], "sethostname": true}
