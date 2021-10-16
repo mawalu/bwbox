@@ -15,9 +15,19 @@ proc checkRelativePath*(p: string): string =
   getHomeDir().joinPath(p)
 
 proc getProfilePath*(profile: string): string =
-  getConfigDir()
-        .joinPath(APP_NAME)
-        .joinPath(profile)
+  let pid = getCurrentProcessId()
+
+  for path in [
+    getConfigDir().joinPath(APP_NAME),
+    &"/usr/share/{APP_NAME}",
+    parentDir(expandSymlink(&"/proc/{pid}/exe")).joinPath("configs")
+  ]:
+    let file = path.joinPath(profile)
+
+    if fileExists(file):
+      return file
+
+  raise newException(IOError, "Profile not found")
 
 proc getProfilePath*(args: Args): string =
   getProfilePath(args.getProfile())
