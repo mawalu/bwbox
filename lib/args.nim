@@ -38,4 +38,7 @@ proc parseArgs*(): Option[Args] =
   if command.len > 0:
     args.cmd = some(command)
 
-  return some(args)
+  if args.name.isSome or args.cmd.isSome or args.profile.isSome:
+    return some(args)
+  else:
+    return none(Args)

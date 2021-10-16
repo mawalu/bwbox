@@ -5,7 +5,6 @@ import random
 
 proc main(): int =
   let args = parseArgs()
-  echo args
 
   if args.isNone:
     echo "Usage: bwshell --name=sandbox_name --profile=profile <sandbox_cmd>"
