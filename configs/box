@@ -1,1 +1,4 @@
-{"extends": "shell", "mountcwd": true}
+{
+    "extends": "shell",
+    "mountcwd": true
+}
