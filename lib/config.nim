@@ -3,6 +3,7 @@ import options
 import bwrap
 import utils
 import json
+import os
 
 type Link* = object
   src*: string
@@ -23,6 +24,7 @@ type Config* = object
   dbusown*: Option[seq[string]]
   dbuscall*: Option[seq[string]]
   dbusbroadcast*: Option[seq[string]]
+  devmount*: Option[seq[string]]
 
 proc applyConfig*(call: var BwrapCall, config: Config) =
   for mount in config.mount.get(@[]):
@@ -33,6 +35,14 @@ proc applyConfig*(call: var BwrapCall, config: Config) =
 
   for symlink in config.symlinks.get(@[]):
      call.addArg("--symlink", symlink.src, symlink.dst)
+
+  for device in config.devmount.get(@[]):
+      call.addArg("--dev-bind", device, device)
+
+  if config.mountcwd.get(false):
+      call
+        .addMount("--bind", getCurrentDir())
+        .addArg("--chdir", getCurrentDir())
 
 proc loadConfig*(path: string): Config =
   return readFile(path)
@@ -53,6 +63,7 @@ proc extendConfig*(config: var Config): Config {.discardable.} =
   config.mountcwd = some(config.mountcwd.get(eConf.mountcwd.get(false)))
   config.sethostname = some(config.sethostname.get(eConf.sethostname.get(false)))
   config.allowdri = some(config.allowdri.get(eConf.allowdri.get(false)))
+  config.devmount = some(config.devmount.get(eConf.devmount.get(@[])))
 
   config.dbus = some(config.dbus.get(eConf.dbus.get(false)))
   config.dbussee = some(config.dbussee.get(@[]).concat(eConf.dbussee.get(@[])))

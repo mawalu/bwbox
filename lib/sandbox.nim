@@ -39,6 +39,11 @@ proc sandboxExec*(args: Args) =
     .addArg("--dev", "/dev")
     .addMount("--dev-bind", "/dev/random")
     .addMount("--dev-bind", "/dev/urandom")
+    .addMount("--ro-bind", "/sys/block")
+    .addMount("--ro-bind", "/sys/bus")
+    .addMount("--ro-bind", "/sys/class")
+    .addMount("--ro-bind", "/sys/dev")
+    .addMount("--ro-bind", "/sys/devices")
     .addArg("--tmpfs", "/tmp")
     .addArg("--tmpfs", "/dev/shm")
     .addArg("--proc", "/proc")
@@ -47,6 +52,10 @@ proc sandboxExec*(args: Args) =
     .addArg("--die-with-parent")
     .addArg("--setenv", "BWSANDBOX", "1")
     .applyConfig(config)
+
+  if config.sethostname.get(false):
+    call
+      .addArg("--hostname", hostname)
 
   if config.dbus.get(false):
     # todo: handle process and cleanup later
@@ -59,14 +68,5 @@ proc sandboxExec*(args: Args) =
 
   if config.allowdri.get(false):
     enableDri(call)
-
-  if config.mountcwd.get(false):
-    call
-      .addMount("--bind", getCurrentDir())
-      .addArg("--chdir", getCurrentDir())
-
-  if config.sethostname.get(false):
-    call
-      .addArg("--hostname", hostname)
 
   call.addArg(args.getCmd).exec()

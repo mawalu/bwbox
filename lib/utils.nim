@@ -41,17 +41,30 @@ proc deviceExists(path: string): bool =
   var res: Stat
   return stat(path, res) >= 0 and S_ISCHR(res.st_mode)
 
+proc mountDriFolder(call: var BwrapCall, path: string) =
+  for file in walkPattern(&"{path}/*"):
+    if dirExists(file):
+      mountDriFolder(call, file)
+    elif deviceExists(file):
+      call.addMount("--dev-bind", file)
+    #else:
+    #  call.addMount("--ro-bin", file)
+
 # https://github.com/flatpak/flatpak/blob/1bdbb80ac57df437e46fce2cdd63e4ff7704718b/common/flatpak-run.c#L1496
 proc enableDri*(call: var BwrapCall) =
+  const folder = "/dev/dri"
   const mounts = [
-    "/dev/dri",                                # general
+    folder,                                    # general
     "/dev/mali", "/dev/mali0", "/dev/umplock", # mali
     "/dev/nvidiactl", "/dev/nvidia-modeset",   # nvidia
     "/dev/nvidia-uvm", "/dev/nvidia-uvm-tools" # nvidia OpenCl/CUDA
   ]
 
+  if dirExists(folder):
+    mountDriFolder(call, folder)
+
   for mount in mounts:
-    if deviceExists(mount):
+    if deviceExists(mount) or dirExists(mount):
       call.addMount("--dev-bind", mount)
 
   for i in 0..20:

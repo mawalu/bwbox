@@ -2,7 +2,7 @@ import posix
 import sequtils
 
 type BwrapCall* = object
-  args: seq[string]
+  args*: seq[string]
 
 proc addArg*(call: var BwrapCall, args: varargs[string]): var BwrapCall {.discardable.}  =
   for arg in args:

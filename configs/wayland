@@ -1,0 +1,7 @@
+{
+    "extends": "default",
+    "romount": ["/run/user/1000/pulse/native", "/run/user/1000/wayland-1"],
+    "dbus": true,
+    "dbuscall": ["org.freedesktop.Notifications.*=@/org/freedesktop/Notifications", "org.freedesktop.portal.*=*"],
+    "dbusbroadcast": ["org.freedesktop.portal.*=@/org/freedesktop/portal/*"]
+}

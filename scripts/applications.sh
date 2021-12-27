@@ -12,7 +12,7 @@ check_dir() {
   for application in "$dir/"*; do
     file="$(basename "$application")"
 
-    sed "s/Exec=/Exec=bwshell --name '$file' --profile gui /gi" "$application" > "$target/$file"
+    sed "s/^Exec=/Exec=bwshell --name '$file' --profile gui /gi" "$application" > "$target/$file"
   done
 }
 
