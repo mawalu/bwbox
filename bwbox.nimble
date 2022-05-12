@@ -2,7 +2,7 @@
 
 version       = "1.0.0"
 author        = "mawalu"
-description   = "A DNS server for the ACME DNS-01 challenge"
+description   = "An experimental sandbox tool for linux apps"
 license       = "MIT"
 srcDir        = "."
 bin           = @["bwbox"]

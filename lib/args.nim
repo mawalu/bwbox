@@ -5,9 +5,10 @@ type Args* = object
   name*: Option[string]
   cmd*: Option[seq[string]]
   profile*: Option[string]
+  debug*: bool
 
 proc getCmd*(args: Args): seq[string] =
-  return args.cmd.get(@[getEnv("SHELL", "/bin/bash")])
+  return args.cmd.get(@[getEnv("SHELL", "/bin/sh")])
 
 proc getProfile*(args: Args): string =
   if args.profile.isSome:
@@ -16,22 +17,26 @@ proc getProfile*(args: Args): string =
   return "default"
 
 proc parseArgs*(): Option[Args] =
-  var args = Args()
+  var args = Args(debug: false)
 
   var command = newSeq[string]()
+  var parsingSandboxArgs = true
   var i = 1
 
   while i <= paramCount():
     var arg = paramStr(i)
 
-    if arg == "--name":
+    if arg == "--name" and parsingSandboxArgs:
       args.name = some(paramStr(i + 1))
       i += 2
-    elif arg == "--profile":
+    elif arg == "--profile" and parsingSandboxArgs:
       args.profile = some(paramStr(i + 1))
       i += 2
+    elif arg == "--debug" and parsingSandboxArgs:
+      args.debug = true
+      i += 1
     else:
-      echo arg
+      parsingSandboxArgs = false
       command.add(arg)
       i += 1
 
