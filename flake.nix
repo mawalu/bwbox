@@ -9,6 +9,12 @@
       nimPackages.buildNimPackage {
         name = "bwbox";
         src = self;
+        nativeBuildInputs = [pkgs.makeWrapper];
+        postInstall = ''
+          wrapProgram $out/bin/bwbox \
+            --prefix PATH ':' ${pkgs.bubblewrap}/bin \
+            --prefix PATH ':' ${pkgs.xdg-dbus-proxy}/bin
+        '';
       };
   };
 }
