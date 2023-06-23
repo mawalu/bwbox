@@ -71,10 +71,6 @@ proc sandboxExec*(args: Args) =
 
   # resolve binary path outside of the sandbox
   var cmd = args.getCmd
-
-  echo cmd
   cmd[0] = findExe(cmd[0])
-
-  echo cmd
 
   call.addArg(cmd).exec()
