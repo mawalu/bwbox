@@ -6,7 +6,7 @@
   outputs = { self, nixpkgs }: {
     packages.x86_64-linux.default =
       with import nixpkgs { system = "x86_64-linux"; };
-      nimPackages.buildNimPackage {
+      buildNimPackage {
         name = "bwbox";
         src = self;
         nativeBuildInputs = [pkgs.makeWrapper];

@@ -1,4 +1,5 @@
 import strutils
+import sequtils
 import options
 import config
 import utils
@@ -36,6 +37,7 @@ proc sandboxExec*(args: Args) =
   config.extendConfig()
 
   call
+    .addArg("--new-session")
     .addArg("--dev", "/dev")
     .addMount("--dev-bind", "/dev/random")
     .addMount("--dev-bind", "/dev/urandom")
@@ -72,5 +74,8 @@ proc sandboxExec*(args: Args) =
   # resolve binary path outside of the sandbox
   var cmd = args.getCmd
   cmd[0] = findExe(cmd[0])
+
+  echo call.args.join("  ")
+  echo cmd
 
   call.addArg(cmd).exec()
