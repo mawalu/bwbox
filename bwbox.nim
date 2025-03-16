@@ -7,7 +7,7 @@ proc main(): int =
   let args = parseArgs()
 
   if args.isNone:
-    echo "Usage: bwshell --name=sandbox_name --profile=profile <sandbox_cmd>"
+    echo "Usage: bwshell --name sandbox_name --profile profile <sandbox_cmd>"
     return 1
   else:
     randomize()
