@@ -3,8 +3,19 @@ import posix
 import bwrap
 import args
 import os
+import posix_utils
+import strutils
 
 const APP_NAME = "bwsandbox"
+
+
+proc getLinuxKernelVersion*(): (int, int) =
+  let version = uname().release
+  let parts = version.split('.')
+  if parts.len >= 2:
+    return (parseInt(parts[0]), parseInt(parts[1]))
+  else:
+    return (0, 0)
 
 proc getDataDir*(): string =
   getEnv("XDG_DATA_DIR", getHomeDir().joinPath(".local/share"))
