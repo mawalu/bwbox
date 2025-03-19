@@ -1,4 +1,3 @@
-import strutils
 import sequtils
 import options
 import config
@@ -8,6 +7,12 @@ import args
 import json
 import dbus
 import os
+import strutils
+
+proc needsNewSession(): bool =
+  # https://github.com/Duncaen/OpenDoas/issues/106
+  let (major, minor) = getLinuxKernelVersion()
+  return major < 5 or (major == 6 and minor < 7)
 
 proc sandboxExec*(args: Args) =
   var call = BwrapCall()
@@ -37,7 +42,6 @@ proc sandboxExec*(args: Args) =
   config.extendConfig()
 
   call
-    .addArg("--new-session")
     .addArg("--dev", "/dev")
     .addMount("--dev-bind", "/dev/random")
     .addMount("--dev-bind", "/dev/urandom")
@@ -54,6 +58,9 @@ proc sandboxExec*(args: Args) =
     .addArg("--die-with-parent")
     .addArg("--setenv", "BWSANDBOX", "1")
     .applyConfig(config)
+
+  if needsNewSession():
+    call.addArg("--new-session")
 
   if config.sethostname.get(false):
     call
